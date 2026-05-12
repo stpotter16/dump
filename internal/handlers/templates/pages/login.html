@@ -1,0 +1,106 @@
+{{ define "title" }}Login{{ end }}
+{{ define "script-tags" }}
+  <script type="module" nonce="{{ .CspNonce }}">
+    const loginForm = document.getElementById("login");
+
+    function setLoginFormState(isEnabled) {
+      document.querySelectorAll("#login input").forEach((el) => {
+        el.disabled = !isEnabled;
+      });
+    }
+
+    function disableLoginForm() {
+      setLoginFormState(false);
+    }
+
+    function enableLoginForm() {
+      setLoginFormState(true);
+    }
+
+    async function login(username, password) {
+      return fetch("/login", {
+        method: "POST",
+        mode: "same-origin",
+        credentials: "include",
+        cache: "no-cache",
+        redirect: "error",
+        body: JSON.stringify({
+          username: username,
+          password: password,
+        }),
+      }).then((response) => {
+        if (!response.ok) {
+          return response.text().then((error) => {
+            return Promise.reject(error);
+          });
+        }
+        return Promise.resolve();
+      });
+    }
+
+    document.getElementById("error-close").addEventListener("click", () => {
+      document.getElementById("error-message").classList.add("hidden");
+      document.getElementById("password").value = "";
+    });
+
+    loginForm.addEventListener("submit", (evt) => {
+      evt.preventDefault();
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+      disableLoginForm();
+      login(username, password)
+        .then(() => {
+          document.location = "/";
+        })
+        .catch((error) => {
+          enableLoginForm();
+          document.getElementById("error-text").textContent = error;
+          document.getElementById("error-message").classList.remove("hidden");
+        });
+    });
+  </script>
+{{ end }}
+{{ define "content" }}
+  <div class="hero min-h-screen">
+    <div class="hero-content flex-col w-full max-w-sm">
+      <h1 class="text-3xl font-bold">Coin</h1>
+      <div class="card bg-base-200 w-full shadow">
+        <div class="card-body">
+          <div id="error-message" class="alert alert-error hidden" role="alert">
+            <span id="error-text"></span>
+            <button
+              id="error-close"
+              type="button"
+              class="btn btn-ghost btn-sm btn-square ml-auto"
+            >
+              &times;
+            </button>
+          </div>
+          <form id="login" class="flex flex-col gap-4">
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">Username</legend>
+              <input
+                class="input w-full"
+                type="text"
+                name="username"
+                id="username"
+                autocomplete="username"
+              />
+            </fieldset>
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">Password</legend>
+              <input
+                class="input w-full"
+                type="password"
+                name="password"
+                id="password"
+                autocomplete="current-password"
+              />
+            </fieldset>
+            <button type="submit" class="btn btn-primary w-full">Login</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{{ end }}

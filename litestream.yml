@@ -1,0 +1,14 @@
+access-key-id: ${LITESTREAM_ACCESS_KEY_ID}
+secret-access-key: ${LITESTREAM_SECRET_ACCESS_KEY}
+dbs:
+  - path: ${GO_TEMPLATE_DB_PATH}/go-template.sqlite
+    replicas:
+      - type: s3
+        bucket: ${LITESTREAM_BUCKET}
+        path: db
+        endpoint: ${LITESTREAM_ENDPOINT}
+        force-path-style: true
+        retention: 168h # 7 days
+        snapshot-interval: 24h
+        validation-interval: 72h
+        sync-interval: 1s

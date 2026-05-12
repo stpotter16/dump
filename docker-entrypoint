@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+
+# Exit build script on first failure.
+set -e
+
+# Exit on unset variable.
+set -u
+
+is_litestream_enabled() {
+  set +ux
+
+  local IS_ENABLED='false'
+
+  if [[ -n "${LITESTREAM_BUCKET}" ]]; then
+    IS_ENABLED='true';
+  fi
+
+  set -ux
+
+  echo "${IS_ENABLED}"
+}
+
+IS_LITESTREAM_ENABLED="$(is_litestream_enabled)"
+readonly IS_LITESTREAM_ENABLED
+
+# Echo commands to stdout.
+set -x
+
+APP_LAUNCH_CMD="/app/go-template"
+
+if [[ "${IS_LITESTREAM_ENABLED}" == 'true' ]]; then
+  /app/litestream version
+  echo "LITESTREAM_BUCKET=${LITESTREAM_BUCKET}"
+  echo "LITESTREAM_ENDPOINT=${LITESTREAM_ENDPOINT}"
+
+  GO_TEMPLATE_DB_FILE="${GO_TEMPLATE_DB_PATH}/go-template.sqlite"
+  if [[ -f "$GO_TEMPLATE_DB_FILE" ]]; then
+    echo "Existing database is $(stat -c %s "${GO_TEMPLATE_DB_FILE}") bytes"
+  else
+    echo "No existing database found"
+    # Restore database from remote storage.
+    /app/litestream restore -if-replica-exists "${GO_TEMPLATE_DB_FILE}"
+  fi
+
+  # Let Litestream start go-app-starter as a child process
+  /app/litestream replicate -exec "$APP_LAUNCH_CMD"
+else
+  echo "Starting without litestream"
+  eval "${APP_LAUNCH_CMD}"
+fi
+
