@@ -1,5 +1,5 @@
 {
-    description = "Dev environment for Go-Template";
+    description = "Dev environment for Dump";
 
     inputs = {
       flake-utils.url = "github:numtide/flake-utils";

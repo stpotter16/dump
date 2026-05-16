@@ -4,5 +4,5 @@ A starter template for HTML based services built in Go with a Sqlite data layer
 
 # How to use
 
-- Change go module name (dump, Dump, Go-Template, GO_TEMPLATE)
+- Change go module name (dump, Dump, Dump, GO_TEMPLATE)
 - Update README
