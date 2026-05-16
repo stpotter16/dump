@@ -30,9 +30,9 @@ func run(
 
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
-	dbPath := getenv("GO_TEMPLATE_DB_PATH")
+	dbPath := getenv("DUMP_DB_PATH")
 	if dbPath == "" {
-		return errors.New("GO_TEMPLATE_DB_PATH environment variable not set")
+		return errors.New("DUMP_DB_PATH environment variable not set")
 	}
 
 	log.Printf("Opening database in %v", dbPath)
