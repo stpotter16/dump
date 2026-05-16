@@ -18,7 +18,7 @@ type contextKey struct {
 }
 
 const SESSION_KEY = "session"
-const SESSION_ENV_KEY = "COIN_SESSION_ENV_KEY"
+const SESSION_ENV_KEY = "DUMP_SESSION_ENV_KEY"
 
 type Session struct {
 	ID        string

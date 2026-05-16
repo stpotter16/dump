@@ -21,7 +21,7 @@ func New(directory string) (DB, error) {
 		return DB{}, err
 	}
 
-	dbPath := filepath.Join(directory, "coin.sqlite")
+	dbPath := filepath.Join(directory, "dump.sqlite")
 	readDB, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		log.Printf("Could not open read db: %v", err)
