@@ -1,4 +1,5 @@
 Bootstrapped from [mtlynch's sourc](https://codeberg.org/mtlynch/go-app-starter/src/branch/master/AGENTS.md#)
+
 # Go
 
 ## Defining symbols
@@ -401,4 +402,3 @@ def test_increase_score(self):
 
 - Do not attempt to push, pull, or fetch from remotes unless the user instructs you to do so directly.
   - You do not have access to any private git repos, so most attempts will fail.
-

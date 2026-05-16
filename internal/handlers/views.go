@@ -7,8 +7,6 @@ import (
 	"net/http"
 
 	"github.com/stpotter16/dump/internal/handlers/middleware"
-	"github.com/stpotter16/dump/internal/handlers/sessions"
-	"github.com/stpotter16/dump/internal/store"
 	"github.com/stpotter16/dump/internal/types"
 )
 
@@ -66,14 +64,14 @@ func loginGet() http.HandlerFunc {
 	}
 }
 
-func indexGet(s store.Store, sessionManager sessions.SessionManger) http.HandlerFunc {
+func indexGet() http.HandlerFunc {
 	t := template.Must(
 		template.New("base.html").
 			ParseFS(
 				templateFS,
 				"templates/layouts/base.html",
 				"templates/layouts/app.html",
-				"templates/pages/index.html",
+				"templates/pages/new.html",
 			))
 	return func(w http.ResponseWriter, r *http.Request) {
 		nonce, err := extractCspNonceOnly(r)
@@ -82,26 +80,40 @@ func indexGet(s store.Store, sessionManager sessions.SessionManger) http.Handler
 			renderAppError(w, r, http.StatusInternalServerError)
 			return
 		}
+		if err := t.Execute(w, viewProps{CspNonce: nonce, ActivePage: "new"}); err != nil {
+			log.Printf("Could not create index page: %v", err)
+			renderAppError(w, r, http.StatusInternalServerError)
+		}
+	}
+}
 
-		clicks, err := s.GetClicks(r.Context())
+func reviewGet() http.HandlerFunc {
+	t := template.Must(
+		template.New("base.html").
+			ParseFS(
+				templateFS,
+				"templates/layouts/base.html",
+				"templates/layouts/app.html",
+				"templates/pages/review.html",
+			))
+	return func(w http.ResponseWriter, r *http.Request) {
+		nonce, err := extractCspNonceOnly(r)
 		if err != nil {
-			log.Printf("indexGet: failed to load clicks: %v", err)
+			log.Printf("Could not extract csp nonce from ctx: %v", err)
 			renderAppError(w, r, http.StatusInternalServerError)
 			return
 		}
-
 		props := struct {
 			viewProps
-			HasClicks bool
-			Clicks    []types.Click
+			HasIdeas bool
+			Ideas    []types.Idea
 		}{
-			viewProps: viewProps{CspNonce: nonce, ActivePage: "dashboard"},
-			HasClicks: len(clicks) > 0,
-			Clicks:    clicks,
+			viewProps: viewProps{CspNonce: nonce, ActivePage: "review"},
+			HasIdeas:  false,
+			Ideas:     []types.Idea{},
 		}
-
 		if err := t.Execute(w, props); err != nil {
-			log.Printf("Could not create index page: %v", err)
+			log.Printf("Could not create review page: %v", err)
 			renderAppError(w, r, http.StatusInternalServerError)
 		}
 	}

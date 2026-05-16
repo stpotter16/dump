@@ -1,0 +1,70 @@
+{{ define "title" }}Review{{ end }}
+{{ define "script-tags" }}{{ end }}
+{{ define "page-content" }}
+  <div class="flex flex-col gap-4 pt-6">
+    <h1 class="text-2xl font-bold">Review</h1>
+    {{ if not .HasIdeas }}
+      <div
+        class="flex flex-col items-center justify-center gap-4 pt-12 text-center"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="size-16 text-base-content/30"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.5"
+            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+          />
+        </svg>
+        <div>
+          <p class="text-lg font-semibold">No ideas yet</p>
+          <p class="text-base-content/60 mt-1">
+            Start by dumping your first thought.
+          </p>
+        </div>
+        <a href="/new" class="btn btn-primary">Add an idea</a>
+      </div>
+    {{ else }}
+      <div class="flex flex-col gap-3">
+        {{ range .Ideas }}
+          <div class="card bg-base-200 shadow-sm">
+            <div class="card-body p-4 gap-2">
+              <p class="text-base leading-relaxed">{{ .Text }}</p>
+              <time class="text-xs text-base-content/50">
+                {{ .CreatedTime.Format "Jan 2, 2006 · 3:04pm" }}
+              </time>
+              {{ if .Related }}
+                <details class="collapse bg-base-100 rounded-box">
+                  <summary
+                    class="collapse-title text-xs text-primary font-medium min-h-0 py-2 px-3"
+                  >
+                    {{ len .Related }}
+                    similar
+                    {{ if eq (len .Related) 1 }}idea{{ else }}ideas{{ end }}
+                  </summary>
+                  <div class="collapse-content px-3 pb-3">
+                    <div class="flex flex-col gap-2">
+                      {{ range .Related }}
+                        <div class="border-l-2 border-base-300 pl-3">
+                          <p class="text-sm">{{ .Text }}</p>
+                          <time class="text-xs text-base-content/40">
+                            {{ .CreatedTime.Format "Jan 2, 2006" }}
+                          </time>
+                        </div>
+                      {{ end }}
+                    </div>
+                  </div>
+                </details>
+              {{ end }}
+            </div>
+          </div>
+        {{ end }}
+      </div>
+    {{ end }}
+  </div>
+{{ end }}

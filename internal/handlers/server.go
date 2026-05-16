@@ -15,7 +15,7 @@ func NewServer(
 	authenticator authentication.Authenticator,
 ) http.Handler {
 	mux := http.NewServeMux()
-	addRoutes(mux, store, sessionManager, authenticator)
+	addRoutes(mux, sessionManager, authenticator)
 	handler := middleware.CspMiddleware(mux)
 	handler = middleware.LoggingWrapper(handler)
 	return handler
