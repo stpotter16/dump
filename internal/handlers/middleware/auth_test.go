@@ -6,10 +6,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/stpotter16/go-template/internal/handlers/middleware"
-	"github.com/stpotter16/go-template/internal/handlers/sessions"
-	"github.com/stpotter16/go-template/internal/store/db"
-	"github.com/stpotter16/go-template/internal/store/sqlite"
+	"github.com/stpotter16/dump/internal/handlers/middleware"
+	"github.com/stpotter16/dump/internal/handlers/sessions"
+	"github.com/stpotter16/dump/internal/store/db"
+	"github.com/stpotter16/dump/internal/store/sqlite"
 )
 
 func newTestSessionManager(t *testing.T) sessions.SessionManger {

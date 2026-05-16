@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/stpotter16/go-template/internal/types"
+	"github.com/stpotter16/dump/internal/types"
 )
 
 func (s Store) GetClicks(ctx context.Context) ([]types.Click, error) {

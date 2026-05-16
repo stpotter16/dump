@@ -12,5 +12,5 @@ set -x
 go build \
     -ldflags "-s -w -linkmode external -extldflags '-static'" \
     -tags sqlite_omit_load_extension \
-    -o ./release/go-template \
+    -o ./release/dump \
     cmd/server/main.go

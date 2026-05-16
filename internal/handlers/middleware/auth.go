@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/stpotter16/go-template/internal/handlers/sessions"
+	"github.com/stpotter16/dump/internal/handlers/sessions"
 )
 
 func NewViewAuthenticationRequiredMiddleware(sessionManager sessions.SessionManger) func(http.Handler) http.Handler {

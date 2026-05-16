@@ -5,7 +5,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/stpotter16/go-template/internal/types"
+	"github.com/stpotter16/dump/internal/types"
 )
 
 func ParseLoginPost(r *http.Request) (types.LoginRequest, error) {

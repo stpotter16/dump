@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/stpotter16/go-template/internal/cookies"
+	"github.com/stpotter16/dump/internal/cookies"
 )
 
 const SESSION_COOKIE = "X-DUMP-SESSION"

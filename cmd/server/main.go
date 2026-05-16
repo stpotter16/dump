@@ -11,11 +11,11 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/stpotter16/go-template/internal/handlers"
-	"github.com/stpotter16/go-template/internal/handlers/authentication"
-	"github.com/stpotter16/go-template/internal/handlers/sessions"
-	"github.com/stpotter16/go-template/internal/store/db"
-	"github.com/stpotter16/go-template/internal/store/sqlite"
+	"github.com/stpotter16/dump/internal/handlers"
+	"github.com/stpotter16/dump/internal/handlers/authentication"
+	"github.com/stpotter16/dump/internal/handlers/sessions"
+	"github.com/stpotter16/dump/internal/store/db"
+	"github.com/stpotter16/dump/internal/store/sqlite"
 )
 
 func run(

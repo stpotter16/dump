@@ -49,7 +49,7 @@
         flyctl = flyctl-nixpkgs.legacyPackages.${system}.flyctl;
       in {
         packages.default = gopkg.buildGoModule {
-          pname = "go-template";
+          pname = "dump";
           version = "0.1.0";
           src = ./.;
           vendorHash = "";

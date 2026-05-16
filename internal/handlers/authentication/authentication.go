@@ -5,9 +5,9 @@ import (
 	"errors"
 	"log"
 
-	"github.com/stpotter16/go-template/internal/auth"
-	"github.com/stpotter16/go-template/internal/store"
-	"github.com/stpotter16/go-template/internal/types"
+	"github.com/stpotter16/dump/internal/auth"
+	"github.com/stpotter16/dump/internal/store"
+	"github.com/stpotter16/dump/internal/types"
 )
 
 var ErrInvalidCredentials = errors.New("invalid credentials")

@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/stpotter16/go-template/internal/store/db"
+	"github.com/stpotter16/dump/internal/store/db"
 )
 
 type contextKey struct {

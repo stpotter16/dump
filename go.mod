@@ -1,4 +1,4 @@
-module github.com/stpotter16/go-template
+module github.com/stpotter16/dump
 
 go 1.25.2
 

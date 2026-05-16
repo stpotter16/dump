@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/stpotter16/go-template/internal/store"
+	"github.com/stpotter16/dump/internal/store"
 )
 
 func postClicks(s store.Store) http.HandlerFunc {

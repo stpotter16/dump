@@ -21,7 +21,7 @@ RUN if [[ -n "${TZ}" ]]; then \
       echo "${TZ}" > /etc/timezone; \
     fi
 
-COPY --from=builder /app/release/go-template /app/go-template
+COPY --from=builder /app/release/dump /app/go-template
 COPY --from=litestream /usr/local/bin/litestream /app/litestream
 COPY ./docker-entrypoint /app/docker-entrypoint
 COPY ./litestream.yml /etc/litestream.yml
