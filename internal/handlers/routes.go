@@ -6,10 +6,13 @@ import (
 	"github.com/stpotter16/dump/internal/handlers/authentication"
 	"github.com/stpotter16/dump/internal/handlers/middleware"
 	"github.com/stpotter16/dump/internal/handlers/sessions"
+	"github.com/stpotter16/dump/internal/store"
 )
 
 func addRoutes(
 	mux *http.ServeMux,
+	store store.Store,
+	embedder Embedder,
 	sessionManager sessions.SessionManger,
 	authenticator authentication.Authenticator,
 ) {
@@ -22,8 +25,12 @@ func addRoutes(
 	// Views that need authentication
 	viewAuthRequired := middleware.NewViewAuthenticationRequiredMiddleware(sessionManager)
 	mux.Handle("GET /{$}", viewAuthRequired(indexGet()))
-	mux.Handle("GET /review", viewAuthRequired(reviewGet()))
+	mux.Handle("GET /review", viewAuthRequired(reviewGet(store)))
 
 	// Auth
 	mux.HandleFunc("POST /login", loginPost(authenticator, sessionManager))
+
+	// Session-authenticated API endpoints with CSRF verification
+	apiAuthRequired := middleware.NewApiAuthenticationRequiredMiddleware(sessionManager)
+	mux.Handle("POST /ideas", apiAuthRequired(postIdeas(store, embedder)))
 }

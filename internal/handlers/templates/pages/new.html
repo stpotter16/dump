@@ -1,16 +1,49 @@
 {{ define "title" }}New idea{{ end }}
-{{ define "script-tags" }}{{ end }}
+{{ define "script-tags" }}
+  <script type="module" nonce="{{ .CspNonce }}">
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+    document
+      .getElementById("idea-form")
+      .addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const errorEl = document.getElementById("idea-error");
+        errorEl.classList.add("hidden");
+
+        const text = document.getElementById("idea-text").value.trim();
+
+        try {
+          const resp = await fetch("/ideas", {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRF-Token": csrfToken,
+            },
+            body: JSON.stringify({ text }),
+          });
+          if (!resp.ok) throw new Error();
+          window.location.href = "/review";
+        } catch {
+          errorEl.classList.remove("hidden");
+        }
+      });
+  </script>
+{{ end }}
 {{ define "page-content" }}
   <div class="flex flex-col gap-6 pt-6">
     <h1 class="text-2xl font-bold">New idea</h1>
-    <form class="flex flex-col gap-4" action="/ideas" method="post">
+    <form id="idea-form" class="flex flex-col gap-4">
       <textarea
-        name="text"
+        id="idea-text"
         class="textarea textarea-bordered w-full h-48 text-base resize-none"
         placeholder="What's on your mind?"
         autofocus
         required
       ></textarea>
+      <p id="idea-error" class="text-error text-sm hidden">
+        Failed to save. Please try again.
+      </p>
       <button type="submit" class="btn btn-primary w-full">Dump it</button>
     </form>
   </div>

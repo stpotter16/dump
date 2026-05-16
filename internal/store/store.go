@@ -14,7 +14,7 @@ type Store interface {
 	GetUserByUsername(ctx context.Context, username string) (types.User, error)
 	CreateUser(ctx context.Context, username, passwordHash string, isAdmin bool) error
 
-	// Clicks
-	GetClicks(ctx context.Context) ([]types.Click, error)
-	CreateClick(ctx context.Context) (int, error)
+	// Ideas
+	CreateIdea(ctx context.Context, text string, embedding []float32) (int, error)
+	GetIdeas(ctx context.Context) ([]types.Idea, error)
 }

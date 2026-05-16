@@ -28,6 +28,15 @@ func NewApiAuthenticationRequiredMiddleware(sessionManager sessions.SessionMange
 				http.Error(w, "Unauthorized request", http.StatusUnauthorized)
 				return
 			}
+			session, err := sessions.GetSessionFromContext(ctx)
+			if err != nil {
+				http.Error(w, "Unauthorized request", http.StatusUnauthorized)
+				return
+			}
+			if r.Header.Get("X-CSRF-Token") != session.CsrfToken {
+				http.Error(w, "Forbidden", http.StatusForbidden)
+				return
+			}
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}

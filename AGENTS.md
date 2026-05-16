@@ -263,6 +263,21 @@ If you learned that methods shouldn't be exported just for testing, add to `AGEN
   - For htmx, use `hx-confirm` which hooks into the custom dialog automatically.
 - Do not embed Go template conditionals inside JavaScript. Instead, render a data attribute or hidden input in HTML and read it from JS.
 
+## CSRF and mutating requests
+
+All mutating requests (POST, PUT, DELETE) use JavaScript `fetch` — never plain HTML form posts.
+
+The pattern:
+
+1. `base.html` renders the session CSRF token into `<meta name="csrf-token" content="{{ .CsrfToken }}" />`.
+2. Page scripts read it with `document.querySelector('meta[name="csrf-token"]').content`.
+3. Every `fetch` call includes `"X-CSRF-Token": csrfToken` in the request headers.
+4. The `apiAuthRequired` middleware verifies `X-CSRF-Token` matches the session token and returns 403 if it does not.
+5. Authenticated view handlers must call `extractAuthViewProps` (not `extractCspNonceOnly`) so `CsrfToken` is populated in the rendered page.
+6. The login page is the only page that uses `extractCspNonceOnly` — it has no session yet.
+
+`sessions.GetSessionFromContext` is the package-level function for reading the session from context. The `apiAuthRequired` middleware is the enforcement point; view middleware (`viewAuthRequired`) does not check CSRF.
+
 # Testing
 
 - After every code change, run `nix flake check` before presenting the solution to the user.

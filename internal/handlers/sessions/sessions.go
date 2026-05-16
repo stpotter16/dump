@@ -105,10 +105,10 @@ func (s SessionManger) PopulateSessionContext(r *http.Request) (context.Context,
 	return context.WithValue(r.Context(), ctxKey, session), nil
 }
 
-func (s SessionManger) SessionFromContext(ctx context.Context) (Session, error) {
+func GetSessionFromContext(ctx context.Context) (Session, error) {
 	ctxKey := contextKey{SESSION_KEY}
-	session, okay := ctx.Value(ctxKey).(Session)
-	if !okay {
+	session, ok := ctx.Value(ctxKey).(Session)
+	if !ok {
 		log.Printf("Unable to extract session from context")
 		return Session{}, errors.New("no session info in context")
 	}

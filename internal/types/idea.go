@@ -12,5 +12,6 @@ type Idea struct {
 	ID          int
 	Text        string
 	CreatedTime time.Time
+	Embedding   []float32
 	Related     []RelatedIdea
 }

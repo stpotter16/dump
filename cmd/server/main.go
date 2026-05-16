@@ -11,6 +11,7 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/stpotter16/dump/internal/embeder"
 	"github.com/stpotter16/dump/internal/handlers"
 	"github.com/stpotter16/dump/internal/handlers/authentication"
 	"github.com/stpotter16/dump/internal/handlers/sessions"
@@ -35,6 +36,16 @@ func run(
 		return errors.New("DUMP_DB_PATH environment variable not set")
 	}
 
+	embederURL := getenv("EMBEDER_URL")
+	if embederURL == "" {
+		return errors.New("EMBEDER_URL environment variable not set")
+	}
+
+	embederAPIKey := getenv("EMBED_API_KEY")
+	if embederAPIKey == "" {
+		return errors.New("EMBED_API_KEY environment variable not set")
+	}
+
 	log.Printf("Opening database in %v", dbPath)
 	database, err := db.New(dbPath)
 	if err != nil {
@@ -52,8 +63,9 @@ func run(
 	}
 
 	authenticator := authentication.New(store)
+	embedderClient := embeder.New(embederURL, embederAPIKey)
 
-	handler := handlers.NewServer(store, sessionManager, authenticator)
+	handler := handlers.NewServer(store, embedderClient, sessionManager, authenticator)
 	port := getenv("PORT")
 	if port == "" {
 		port = "8080"

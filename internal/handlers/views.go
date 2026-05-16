@@ -7,6 +7,8 @@ import (
 	"net/http"
 
 	"github.com/stpotter16/dump/internal/handlers/middleware"
+	"github.com/stpotter16/dump/internal/handlers/sessions"
+	"github.com/stpotter16/dump/internal/store"
 	"github.com/stpotter16/dump/internal/types"
 )
 
@@ -74,20 +76,20 @@ func indexGet() http.HandlerFunc {
 				"templates/pages/new.html",
 			))
 	return func(w http.ResponseWriter, r *http.Request) {
-		nonce, err := extractCspNonceOnly(r)
+		props, err := extractAuthViewProps(r, "new")
 		if err != nil {
-			log.Printf("Could not extract csp nonce from ctx: %v", err)
+			log.Printf("indexGet: could not extract view props: %v", err)
 			renderAppError(w, r, http.StatusInternalServerError)
 			return
 		}
-		if err := t.Execute(w, viewProps{CspNonce: nonce, ActivePage: "new"}); err != nil {
-			log.Printf("Could not create index page: %v", err)
+		if err := t.Execute(w, props); err != nil {
+			log.Printf("indexGet: could not render page: %v", err)
 			renderAppError(w, r, http.StatusInternalServerError)
 		}
 	}
 }
 
-func reviewGet() http.HandlerFunc {
+func reviewGet(s store.Store) http.HandlerFunc {
 	t := template.Must(
 		template.New("base.html").
 			ParseFS(
@@ -97,26 +99,50 @@ func reviewGet() http.HandlerFunc {
 				"templates/pages/review.html",
 			))
 	return func(w http.ResponseWriter, r *http.Request) {
-		nonce, err := extractCspNonceOnly(r)
+		baseProps, err := extractAuthViewProps(r, "review")
 		if err != nil {
-			log.Printf("Could not extract csp nonce from ctx: %v", err)
+			log.Printf("reviewGet: could not extract view props: %v", err)
 			renderAppError(w, r, http.StatusInternalServerError)
 			return
 		}
+
+		ideas, err := s.GetIdeas(r.Context())
+		if err != nil {
+			log.Printf("reviewGet: failed to load ideas: %v", err)
+			renderAppError(w, r, http.StatusInternalServerError)
+			return
+		}
+
+		populateRelated(ideas)
+
 		props := struct {
 			viewProps
-			HasIdeas bool
-			Ideas    []types.Idea
+			Ideas []types.Idea
 		}{
-			viewProps: viewProps{CspNonce: nonce, ActivePage: "review"},
-			HasIdeas:  false,
-			Ideas:     []types.Idea{},
+			viewProps: baseProps,
+			Ideas:     ideas,
 		}
 		if err := t.Execute(w, props); err != nil {
-			log.Printf("Could not create review page: %v", err)
+			log.Printf("reviewGet: could not render page: %v", err)
 			renderAppError(w, r, http.StatusInternalServerError)
 		}
 	}
+}
+
+func extractAuthViewProps(r *http.Request, activePage string) (viewProps, error) {
+	nonce, err := middleware.NonceFromContext(r.Context())
+	if err != nil {
+		return viewProps{}, err
+	}
+	session, err := sessions.GetSessionFromContext(r.Context())
+	if err != nil {
+		return viewProps{}, err
+	}
+	return viewProps{
+		CsrfToken:  session.CsrfToken,
+		CspNonce:   nonce,
+		ActivePage: activePage,
+	}, nil
 }
 
 func extractCspNonceOnly(r *http.Request) (string, error) {

@@ -13,7 +13,9 @@ CREATE TABLE IF NOT EXISTS session (
     expires_at TEXT NOT NULL
 ) STRICT;
 
-CREATE TABLE IF NOT EXISTS clicks (
+CREATE TABLE IF NOT EXISTS idea (
     id INTEGER PRIMARY KEY,
-    created_time TEXT NOT NULL
+    text TEXT NOT NULL,
+    created_time TEXT NOT NULL,
+    embedding BLOB
 ) STRICT;
