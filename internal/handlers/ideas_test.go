@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stpotter16/dump/internal/auth"
 	"github.com/stpotter16/dump/internal/handlers"
 	"github.com/stpotter16/dump/internal/handlers/authentication"
 	"github.com/stpotter16/dump/internal/handlers/sessions"
@@ -27,7 +26,7 @@ func (f fakeEmbedder) Embed(_ context.Context, _ string) ([]float32, error) {
 	return f.embedding, f.err
 }
 
-func newTestServer(t *testing.T, embedder handlers.Embedder) (*httptest.Server, store.Store) {
+func newTestServer(t *testing.T, embedder handlers.Embedder, passphrase string) (*httptest.Server, store.Store) {
 	t.Helper()
 
 	d, err := db.New(t.TempDir())
@@ -48,23 +47,15 @@ func newTestServer(t *testing.T, embedder handlers.Embedder) (*httptest.Server, 
 		t.Fatalf("sessions.New: %v", err)
 	}
 
-	server := httptest.NewServer(handlers.NewServer(s, embedder, sm, authentication.New(s)))
+	server := httptest.NewServer(handlers.NewServer(s, embedder, sm, authentication.New(passphrase)))
 	t.Cleanup(server.Close)
 	return server, s
 }
 
-func loginUser(t *testing.T, server *httptest.Server, s store.Store, username, password string) []*http.Cookie {
+func loginWithPassphrase(t *testing.T, server *httptest.Server, passphrase string) []*http.Cookie {
 	t.Helper()
 
-	hash, err := auth.HashPassword(password)
-	if err != nil {
-		t.Fatalf("auth.HashPassword: %v", err)
-	}
-	if err := s.CreateUser(context.Background(), username, hash, false); err != nil {
-		t.Fatalf("s.CreateUser: %v", err)
-	}
-
-	body, _ := json.Marshal(map[string]string{"username": username, "password": password})
+	body, _ := json.Marshal(map[string]string{"passphrase": passphrase})
 	resp, err := http.Post(server.URL+"/login", "application/json", bytes.NewReader(body))
 	if err != nil {
 		t.Fatalf("POST /login: %v", err)
@@ -130,9 +121,11 @@ func postIdea(t *testing.T, server *httptest.Server, cookies []*http.Cookie, csr
 	return resp
 }
 
+const testPassphrase = "test-passphrase"
+
 func TestPostIdeas_Returns201OnSuccess(t *testing.T) {
-	server, s := newTestServer(t, fakeEmbedder{embedding: []float32{1, 0, 0}})
-	cookies := loginUser(t, server, s, "testuser", "password")
+	server, _ := newTestServer(t, fakeEmbedder{embedding: []float32{1, 0, 0}}, testPassphrase)
+	cookies := loginWithPassphrase(t, server, "test-passphrase")
 	csrfToken := getCsrfToken(t, server, cookies)
 
 	resp := postIdea(t, server, cookies, csrfToken, "build a neural interface")
@@ -144,8 +137,8 @@ func TestPostIdeas_Returns201OnSuccess(t *testing.T) {
 }
 
 func TestPostIdeas_ForbiddenWithoutCsrfToken(t *testing.T) {
-	server, s := newTestServer(t, fakeEmbedder{})
-	cookies := loginUser(t, server, s, "testuser", "password")
+	server, _ := newTestServer(t, fakeEmbedder{}, testPassphrase)
+	cookies := loginWithPassphrase(t, server, "test-passphrase")
 
 	body, _ := json.Marshal(map[string]string{"text": "sneaky request"})
 	req, _ := http.NewRequest(http.MethodPost, server.URL+"/ideas", bytes.NewReader(body))
@@ -162,8 +155,8 @@ func TestPostIdeas_ForbiddenWithoutCsrfToken(t *testing.T) {
 }
 
 func TestPostIdeas_SavesIdeaEvenWhenEmbedderFails(t *testing.T) {
-	server, s := newTestServer(t, fakeEmbedder{err: context.DeadlineExceeded})
-	cookies := loginUser(t, server, s, "testuser", "password")
+	server, s := newTestServer(t, fakeEmbedder{err: context.DeadlineExceeded}, testPassphrase)
+	cookies := loginWithPassphrase(t, server, "test-passphrase")
 	csrfToken := getCsrfToken(t, server, cookies)
 
 	resp := postIdea(t, server, cookies, csrfToken, "idea with no embedding")
@@ -189,8 +182,8 @@ func TestReviewPage_ShowsSimilarIdeas(t *testing.T) {
 	similar := []float32{0.99, 0.01, 0.0}
 	unrelated := []float32{0.0, 0.0, 1.0}
 
-	server, s := newTestServer(t, fakeEmbedder{})
-	cookies := loginUser(t, server, s, "testuser", "password")
+	server, s := newTestServer(t, fakeEmbedder{}, testPassphrase)
+	cookies := loginWithPassphrase(t, server, "test-passphrase")
 
 	ctx := context.Background()
 	for _, idea := range []struct {

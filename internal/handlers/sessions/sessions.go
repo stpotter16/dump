@@ -7,7 +7,6 @@ import (
 	"errors"
 	"log"
 	"net/http"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/stpotter16/dump/internal/store/db"
@@ -22,7 +21,6 @@ const SESSION_ENV_KEY = "DUMP_SESSION_ENV_KEY"
 
 type Session struct {
 	ID        string
-	UserId    int
 	CsrfToken string
 }
 
@@ -47,7 +45,7 @@ func New(db db.DB, getenv func(string) string) (SessionManger, error) {
 	return s, nil
 }
 
-func (s SessionManger) CreateSession(w http.ResponseWriter, r *http.Request, userId int) error {
+func (s SessionManger) CreateSession(w http.ResponseWriter, r *http.Request) error {
 	sessionId := uuid.NewString()
 	csrfToken, err := generateCsrfToken()
 	if err != nil {
@@ -56,7 +54,6 @@ func (s SessionManger) CreateSession(w http.ResponseWriter, r *http.Request, use
 	}
 	session := Session{
 		ID:        sessionId,
-		UserId:    userId,
 		CsrfToken: csrfToken,
 	}
 
@@ -116,22 +113,15 @@ func GetSessionFromContext(ctx context.Context) (Session, error) {
 }
 
 func (s SessionManger) loadSession(r *http.Request) (Session, error) {
-	cookie, err := s.readSessionCookie(r)
+	sessionID, err := s.readSessionCookie(r)
 	if err != nil {
 		log.Printf("Failed to read session cookie: %v", err)
 		return Session{}, err
 	}
 
-	cookieVals := strings.SplitN(cookie, "::", 2)
-	if len(cookieVals) != 2 {
-		log.Printf("Invalid cookie value: %s", cookie)
-		return Session{}, errors.New("cookie is invalid")
-	}
-	cookieToken := cookieVals[1]
-
-	serializedSession, err := s.readSession(r.Context(), cookieToken)
+	serializedSession, err := s.readSession(r.Context(), sessionID)
 	if err != nil {
-		log.Printf("Failed to load session data for session %s: %v", cookieToken, err)
+		log.Printf("Failed to load session data for session %s: %v", sessionID, err)
 		return Session{}, err
 	}
 
@@ -140,7 +130,7 @@ func (s SessionManger) loadSession(r *http.Request) (Session, error) {
 		return Session{}, err
 	}
 
-	if cookieToken != session.ID {
+	if sessionID != session.ID {
 		return Session{}, errors.New("invalid session token")
 	}
 

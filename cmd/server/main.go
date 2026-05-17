@@ -46,6 +46,11 @@ func run(
 		return errors.New("EMBED_API_KEY environment variable not set")
 	}
 
+	passphrase := getenv("DUMP_PASSPHRASE")
+	if passphrase == "" {
+		return errors.New("DUMP_PASSPHRASE environment variable not set")
+	}
+
 	log.Printf("Opening database in %v", dbPath)
 	database, err := db.New(dbPath)
 	if err != nil {
@@ -62,7 +67,7 @@ func run(
 		return err
 	}
 
-	authenticator := authentication.New(store)
+	authenticator := authentication.New(passphrase)
 	embedderClient := embeder.New(embederURL, embederAPIKey)
 
 	handler := handlers.NewServer(store, embedderClient, sessionManager, authenticator)

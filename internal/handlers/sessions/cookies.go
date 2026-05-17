@@ -1,7 +1,6 @@
 package sessions
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/stpotter16/dump/internal/cookies"
@@ -15,7 +14,7 @@ func (s SessionManger) readSessionCookie(r *http.Request) (string, error) {
 }
 
 func (s SessionManger) writeSessionCookie(w http.ResponseWriter, session Session) error {
-	cookieVal := fmt.Sprintf("%d::%s", session.UserId, session.ID)
+	cookieVal := session.ID
 	cookie := http.Cookie{
 		Name:     SESSION_COOKIE,
 		Value:    cookieVal,

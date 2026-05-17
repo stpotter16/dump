@@ -17,8 +17,7 @@ func loginPost(authenticator authentication.Authenticator, sessionManager sessio
 			return
 		}
 
-		userId, err := authenticator.AuthenticateUser(r.Context(), req)
-		if err != nil {
+		if err := authenticator.Authenticate(req.Passphrase); err != nil {
 			if errors.Is(err, authentication.ErrInvalidCredentials) {
 				http.Error(w, "Invalid credentials", http.StatusUnauthorized)
 				return
@@ -27,7 +26,7 @@ func loginPost(authenticator authentication.Authenticator, sessionManager sessio
 			return
 		}
 
-		if err := sessionManager.CreateSession(w, r, userId); err != nil {
+		if err := sessionManager.CreateSession(w, r); err != nil {
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
