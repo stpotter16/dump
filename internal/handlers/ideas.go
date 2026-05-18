@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"math"
@@ -60,17 +61,26 @@ func postIdeas(s store.Store, embedder Embedder) http.HandlerFunc {
 			return
 		}
 
-		embedding, err := embedder.Embed(r.Context(), req.Text)
+		id, err := s.CreateIdea(r.Context(), req.Text)
 		if err != nil {
-			log.Printf("postIdeas: failed to embed text: %v", err)
-		}
-
-		if _, err := s.CreateIdea(r.Context(), req.Text, embedding); err != nil {
 			log.Printf("postIdeas: failed to create idea: %v", err)
 			http.Error(w, "Server issue - try again later", http.StatusInternalServerError)
 			return
 		}
 
+		go embedAndStore(s, embedder, id, req.Text)
+
 		w.WriteHeader(http.StatusCreated)
+	}
+}
+
+func embedAndStore(s store.Store, embedder Embedder, id int, text string) {
+	embedding, err := embedder.Embed(context.Background(), text)
+	if err != nil {
+		log.Printf("embedAndStore: failed to embed idea %d: %v", id, err)
+		return
+	}
+	if err := s.UpdateIdeaEmbedding(context.Background(), id, embedding); err != nil {
+		log.Printf("embedAndStore: failed to store embedding for idea %d: %v", id, err)
 	}
 }

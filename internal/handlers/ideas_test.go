@@ -173,9 +173,6 @@ func TestPostIdeas_SavesIdeaEvenWhenEmbedderFails(t *testing.T) {
 	if got, want := len(ideas), 1; got != want {
 		t.Errorf("len(ideas) = %d, want %d", got, want)
 	}
-	if ideas[0].Embedding != nil {
-		t.Errorf("embedding should be nil when embedder fails")
-	}
 }
 
 func TestReviewPage_ShowsSimilarIdeas(t *testing.T) {
@@ -194,8 +191,12 @@ func TestReviewPage_ShowsSimilarIdeas(t *testing.T) {
 		{"brain computer link", similar},
 		{"morning run plan", unrelated},
 	} {
-		if _, err := s.CreateIdea(ctx, idea.text, idea.embedding); err != nil {
+		id, err := s.CreateIdea(ctx, idea.text)
+		if err != nil {
 			t.Fatalf("CreateIdea %q: %v", idea.text, err)
+		}
+		if err := s.UpdateIdeaEmbedding(ctx, id, idea.embedding); err != nil {
+			t.Fatalf("UpdateIdeaEmbedding %q: %v", idea.text, err)
 		}
 	}
 

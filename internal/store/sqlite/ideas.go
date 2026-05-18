@@ -9,11 +9,11 @@ import (
 	"github.com/stpotter16/dump/internal/types"
 )
 
-func (s Store) CreateIdea(ctx context.Context, text string, embedding []float32) (int, error) {
+func (s Store) CreateIdea(ctx context.Context, text string) (int, error) {
 	now := formatTime(time.Now().UTC())
 	result, err := s.db.Exec(ctx,
-		`INSERT INTO idea (text, created_time, embedding) VALUES (?, ?, ?)`,
-		text, now, encodeEmbedding(embedding),
+		`INSERT INTO idea (text, created_time, embedding) VALUES (?, ?, NULL)`,
+		text, now,
 	)
 	if err != nil {
 		return 0, err
@@ -23,6 +23,14 @@ func (s Store) CreateIdea(ctx context.Context, text string, embedding []float32)
 		return 0, err
 	}
 	return int(id), nil
+}
+
+func (s Store) UpdateIdeaEmbedding(ctx context.Context, id int, embedding []float32) error {
+	_, err := s.db.Exec(ctx,
+		`UPDATE idea SET embedding = ? WHERE id = ?`,
+		encodeEmbedding(embedding), id,
+	)
+	return err
 }
 
 func (s Store) GetIdeas(ctx context.Context) ([]types.Idea, error) {

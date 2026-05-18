@@ -7,6 +7,7 @@ import (
 )
 
 type Store interface {
-	CreateIdea(ctx context.Context, text string, embedding []float32) (int, error)
+	CreateIdea(ctx context.Context, text string) (int, error)
+	UpdateIdeaEmbedding(ctx context.Context, id int, embedding []float32) error
 	GetIdeas(ctx context.Context) ([]types.Idea, error)
 }
