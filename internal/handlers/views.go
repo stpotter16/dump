@@ -89,7 +89,7 @@ func indexGet() http.HandlerFunc {
 	}
 }
 
-func reviewGet(s store.Store) http.HandlerFunc {
+func reviewGet(s store.Store, threshold float32) http.HandlerFunc {
 	t := template.Must(
 		template.New("base.html").
 			ParseFS(
@@ -113,7 +113,7 @@ func reviewGet(s store.Store) http.HandlerFunc {
 			return
 		}
 
-		populateRelated(ideas)
+		populateRelated(ideas, threshold)
 
 		props := struct {
 			viewProps

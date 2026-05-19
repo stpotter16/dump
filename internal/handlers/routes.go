@@ -15,6 +15,7 @@ func addRoutes(
 	embedder Embedder,
 	sessionManager sessions.SessionManger,
 	authenticator authentication.Authenticator,
+	cfg Config,
 ) {
 	// Static
 	mux.Handle("GET /static/", http.StripPrefix("/static/", serveStaticFiles()))
@@ -25,8 +26,8 @@ func addRoutes(
 	// Views that need authentication
 	viewAuthRequired := middleware.NewViewAuthenticationRequiredMiddleware(sessionManager)
 	mux.Handle("GET /{$}", viewAuthRequired(indexGet()))
-	mux.Handle("GET /review", viewAuthRequired(reviewGet(store)))
-	mux.Handle("GET /consolidate", viewAuthRequired(consolidateGet(store)))
+	mux.Handle("GET /review", viewAuthRequired(reviewGet(store, cfg.SimilarityThreshold)))
+	mux.Handle("GET /consolidate", viewAuthRequired(consolidateGet(store, cfg.SimilarityThreshold)))
 
 	// Auth
 	mux.HandleFunc("POST /login", loginPost(authenticator, sessionManager))

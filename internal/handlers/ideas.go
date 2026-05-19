@@ -12,9 +12,7 @@ import (
 	"github.com/stpotter16/dump/internal/types"
 )
 
-const similarityThreshold float32 = 0.5
-
-func populateRelated(ideas []types.Idea) {
+func populateRelated(ideas []types.Idea, threshold float32) {
 	for i := range ideas {
 		if ideas[i].Embedding == nil {
 			continue
@@ -23,7 +21,7 @@ func populateRelated(ideas []types.Idea) {
 			if i == j || ideas[j].Embedding == nil {
 				continue
 			}
-			if cosineSimilarity(ideas[i].Embedding, ideas[j].Embedding) >= similarityThreshold {
+			if cosineSimilarity(ideas[i].Embedding, ideas[j].Embedding) >= threshold {
 				ideas[i].Related = append(ideas[i].Related, types.RelatedIdea{
 					ID:          ideas[j].ID,
 					Text:        ideas[j].Text,
@@ -57,7 +55,7 @@ type ideaCluster struct {
 // transitive grouping (A~B and B~C puts all three in one cluster). Ideas are
 // sorted newest-first by the store, so the smallest index in each group is
 // the most recently added and is designated the keeper.
-func buildClusters(ideas []types.Idea) []ideaCluster {
+func buildClusters(ideas []types.Idea, threshold float32) []ideaCluster {
 	n := len(ideas)
 	parent := make([]int, n)
 	for i := range parent {
@@ -80,7 +78,7 @@ func buildClusters(ideas []types.Idea) []ideaCluster {
 			if ideas[j].Embedding == nil {
 				continue
 			}
-			if cosineSimilarity(ideas[i].Embedding, ideas[j].Embedding) >= similarityThreshold {
+			if cosineSimilarity(ideas[i].Embedding, ideas[j].Embedding) >= threshold {
 				rx, ry := find(i), find(j)
 				if rx != ry {
 					parent[rx] = ry

@@ -9,7 +9,7 @@ import (
 	"github.com/stpotter16/dump/internal/store"
 )
 
-func consolidateGet(s store.Store) http.HandlerFunc {
+func consolidateGet(s store.Store, threshold float32) http.HandlerFunc {
 	t := template.Must(
 		template.New("base.html").ParseFS(
 			templateFS,
@@ -37,7 +37,7 @@ func consolidateGet(s store.Store) http.HandlerFunc {
 			Clusters []ideaCluster
 		}{
 			viewProps: baseProps,
-			Clusters:  buildClusters(ideas),
+			Clusters:  buildClusters(ideas, threshold),
 		}
 		if err := t.Execute(w, props); err != nil {
 			log.Printf("consolidateGet: could not render page: %v", err)

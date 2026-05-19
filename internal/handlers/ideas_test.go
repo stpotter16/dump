@@ -47,7 +47,7 @@ func newTestServer(t *testing.T, embedder handlers.Embedder, passphrase string) 
 		t.Fatalf("sessions.New: %v", err)
 	}
 
-	server := httptest.NewServer(handlers.NewServer(s, embedder, sm, authentication.New(passphrase)))
+	server := httptest.NewServer(handlers.NewServer(s, embedder, sm, authentication.New(passphrase), handlers.Config{SimilarityThreshold: 0.5}))
 	t.Cleanup(server.Close)
 	return server, s
 }

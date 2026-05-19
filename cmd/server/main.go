@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"time"
 
 	"github.com/stpotter16/dump/internal/embeder"
@@ -67,10 +68,20 @@ func run(
 		return err
 	}
 
+	similarityThreshold := float32(0.5)
+	if raw := getenv("DUMP_SIMILARITY_THRESHOLD"); raw != "" {
+		parsed, err := strconv.ParseFloat(raw, 32)
+		if err != nil || parsed <= 0 || parsed > 1 {
+			return fmt.Errorf("DUMP_SIMILARITY_THRESHOLD must be a number in (0, 1], got %q", raw)
+		}
+		similarityThreshold = float32(parsed)
+	}
+
 	authenticator := authentication.New(passphrase)
 	embedderClient := embeder.New(embederURL, embederAPIKey)
 
-	handler := handlers.NewServer(store, embedderClient, sessionManager, authenticator)
+	cfg := handlers.Config{SimilarityThreshold: similarityThreshold}
+	handler := handlers.NewServer(store, embedderClient, sessionManager, authenticator, cfg)
 	port := getenv("PORT")
 	if port == "" {
 		port = "8080"
