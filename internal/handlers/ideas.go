@@ -6,6 +6,7 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"slices"
 
 	"github.com/stpotter16/dump/internal/store"
 	"github.com/stpotter16/dump/internal/types"
@@ -45,6 +46,70 @@ func cosineSimilarity(a, b []float32) float32 {
 	}
 	denom := float32(math.Sqrt(float64(normA))) * float32(math.Sqrt(float64(normB)))
 	return dot / denom
+}
+
+type ideaCluster struct {
+	Keep   types.Idea
+	Delete []types.Idea
+}
+
+// buildClusters groups ideas into similarity clusters using union-find for
+// transitive grouping (A~B and B~C puts all three in one cluster). Ideas are
+// sorted newest-first by the store, so the smallest index in each group is
+// the most recently added and is designated the keeper.
+func buildClusters(ideas []types.Idea) []ideaCluster {
+	n := len(ideas)
+	parent := make([]int, n)
+	for i := range parent {
+		parent[i] = i
+	}
+
+	var find func(int) int
+	find = func(x int) int {
+		if parent[x] != x {
+			parent[x] = find(parent[x])
+		}
+		return parent[x]
+	}
+
+	for i := range ideas {
+		if ideas[i].Embedding == nil {
+			continue
+		}
+		for j := i + 1; j < n; j++ {
+			if ideas[j].Embedding == nil {
+				continue
+			}
+			if cosineSimilarity(ideas[i].Embedding, ideas[j].Embedding) >= similarityThreshold {
+				rx, ry := find(i), find(j)
+				if rx != ry {
+					parent[rx] = ry
+				}
+			}
+		}
+	}
+
+	groups := map[int][]int{}
+	for i := range ideas {
+		root := find(i)
+		groups[root] = append(groups[root], i)
+	}
+
+	var clusters []ideaCluster
+	for _, indices := range groups {
+		if len(indices) < 2 {
+			continue
+		}
+		keepIdx := slices.Min(indices)
+		c := ideaCluster{Keep: ideas[keepIdx]}
+		for _, idx := range indices {
+			if idx != keepIdx {
+				c.Delete = append(c.Delete, ideas[idx])
+			}
+		}
+		clusters = append(clusters, c)
+	}
+	return clusters
 }
 
 func postIdeas(s store.Store, embedder Embedder) http.HandlerFunc {

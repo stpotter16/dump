@@ -3,7 +3,9 @@ package sqlite
 import (
 	"context"
 	"encoding/binary"
+	"fmt"
 	"math"
+	"strings"
 	"time"
 
 	"github.com/stpotter16/dump/internal/types"
@@ -61,6 +63,20 @@ func (s Store) GetIdeas(ctx context.Context) ([]types.Idea, error) {
 		return nil, err
 	}
 	return ideas, nil
+}
+
+func (s Store) DeleteIdeas(ctx context.Context, ids []int) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	placeholders := strings.TrimSuffix(strings.Repeat("?,", len(ids)), ",")
+	query := fmt.Sprintf("DELETE FROM idea WHERE id IN (%s)", placeholders)
+	args := make([]any, len(ids))
+	for i, id := range ids {
+		args[i] = id
+	}
+	_, err := s.db.Exec(ctx, query, args...)
+	return err
 }
 
 func encodeEmbedding(embedding []float32) []byte {

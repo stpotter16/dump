@@ -26,6 +26,7 @@ func addRoutes(
 	viewAuthRequired := middleware.NewViewAuthenticationRequiredMiddleware(sessionManager)
 	mux.Handle("GET /{$}", viewAuthRequired(indexGet()))
 	mux.Handle("GET /review", viewAuthRequired(reviewGet(store)))
+	mux.Handle("GET /consolidate", viewAuthRequired(consolidateGet(store)))
 
 	// Auth
 	mux.HandleFunc("POST /login", loginPost(authenticator, sessionManager))
@@ -33,4 +34,5 @@ func addRoutes(
 	// Session-authenticated API endpoints with CSRF verification
 	apiAuthRequired := middleware.NewApiAuthenticationRequiredMiddleware(sessionManager)
 	mux.Handle("POST /ideas", apiAuthRequired(postIdeas(store, embedder)))
+	mux.Handle("POST /consolidate", apiAuthRequired(consolidatePost(store)))
 }

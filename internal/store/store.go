@@ -10,4 +10,5 @@ type Store interface {
 	CreateIdea(ctx context.Context, text string) (int, error)
 	UpdateIdeaEmbedding(ctx context.Context, id int, embedding []float32) error
 	GetIdeas(ctx context.Context) ([]types.Idea, error)
+	DeleteIdeas(ctx context.Context, ids []int) error
 }
