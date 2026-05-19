@@ -7,6 +7,7 @@ import (
 	"math"
 	"net/http"
 	"slices"
+	"strconv"
 
 	"github.com/stpotter16/dump/internal/store"
 	"github.com/stpotter16/dump/internal/types"
@@ -134,6 +135,22 @@ func postIdeas(s store.Store, embedder Embedder) http.HandlerFunc {
 		go embedAndStore(s, embedder, id, req.Text)
 
 		w.WriteHeader(http.StatusCreated)
+	}
+}
+
+func deleteIdea(s store.Store) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id, err := strconv.Atoi(r.PathValue("id"))
+		if err != nil || id <= 0 {
+			http.Error(w, "Invalid idea ID", http.StatusBadRequest)
+			return
+		}
+		if err := s.DeleteIdeas(r.Context(), []int{id}); err != nil {
+			log.Printf("deleteIdea: failed to delete idea %d: %v", id, err)
+			http.Error(w, "Server issue - try again later", http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
 	}
 }
 

@@ -1,5 +1,31 @@
 {{ define "title" }}Review{{ end }}
-{{ define "script-tags" }}{{ end }}
+{{ define "script-tags" }}
+  <script type="module" nonce="{{ .CspNonce }}">
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+    document
+      .getElementById("ideas-list")
+      ?.addEventListener("click", async (e) => {
+        const btn = e.target.closest("[data-delete-id]");
+        if (!btn) return;
+
+        const id = btn.dataset.deleteId;
+        btn.disabled = true;
+
+        try {
+          const resp = await fetch(`/ideas/${id}`, {
+            method: "DELETE",
+            credentials: "include",
+            headers: { "X-CSRF-Token": csrfToken },
+          });
+          if (!resp.ok) throw new Error();
+          document.getElementById(`idea-${id}`)?.remove();
+        } catch {
+          btn.disabled = false;
+        }
+      });
+  </script>
+{{ end }}
 {{ define "page-content" }}
   <div class="flex flex-col gap-4 pt-6">
     <h1 class="text-2xl font-bold">Review</h1>
@@ -30,11 +56,33 @@
         <a href="/new" class="btn btn-primary">Add an idea</a>
       </div>
     {{ else }}
-      <div class="flex flex-col gap-3">
+      <div id="ideas-list" class="flex flex-col gap-3">
         {{ range .Ideas }}
-          <div class="card bg-base-200 shadow-sm">
+          <div id="idea-{{ .ID }}" class="card bg-base-200 shadow-sm">
             <div class="card-body p-4 gap-2">
-              <p class="text-base leading-relaxed">{{ .Text }}</p>
+              <div class="flex items-start justify-between gap-2">
+                <p class="text-base leading-relaxed">{{ .Text }}</p>
+                <button
+                  data-delete-id="{{ .ID }}"
+                  class="btn btn-ghost btn-xs text-base-content/30 hover:text-error shrink-0 mt-0.5"
+                  aria-label="Delete idea"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="size-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                </button>
+              </div>
               <time class="text-xs text-base-content/50">
                 {{ .CreatedTime.Format "Jan 2, 2006 · 3:04pm" }}
               </time>

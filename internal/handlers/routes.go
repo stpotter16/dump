@@ -35,5 +35,6 @@ func addRoutes(
 	// Session-authenticated API endpoints with CSRF verification
 	apiAuthRequired := middleware.NewApiAuthenticationRequiredMiddleware(sessionManager)
 	mux.Handle("POST /ideas", apiAuthRequired(postIdeas(store, embedder)))
+	mux.Handle("DELETE /ideas/{id}", apiAuthRequired(deleteIdea(store)))
 	mux.Handle("POST /consolidate", apiAuthRequired(consolidatePost(store)))
 }
