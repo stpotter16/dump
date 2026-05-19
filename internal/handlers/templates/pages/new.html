@@ -23,7 +23,8 @@
             body: JSON.stringify({ text }),
           });
           if (!resp.ok) throw new Error();
-          window.location.href = "/review";
+          document.getElementById("idea-text").value = "";
+          document.getElementById("idea-text").focus();
         } catch {
           errorEl.classList.remove("hidden");
         }
