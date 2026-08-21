@@ -1,0 +1,34 @@
+[Unit]
+Description=dump application server
+After=network-online.target litestream.service
+Wants=network-online.target litestream.service
+
+[Service]
+Type=simple
+User=dump
+Group=dump
+WorkingDirectory=/opt/dump
+ExecStart=/opt/dump/dump
+EnvironmentFile=/etc/dump/dump.env
+UMask=0007
+
+# cmd/server/main.go only handles os.Interrupt (SIGINT), not SIGTERM, so
+# tell systemd to send SIGINT on stop/restart to get a graceful
+# server.Shutdown().
+KillSignal=SIGINT
+TimeoutStopSec=10s
+
+Restart=on-failure
+RestartSec=2s
+
+# Hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/dump
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+[Install]
+WantedBy=multi-user.target
