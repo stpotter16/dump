@@ -1,4 +1,4 @@
-package embeder_test
+package voyageai_test
 
 import (
 	"context"
@@ -7,14 +7,17 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/stpotter16/dump/internal/embeder"
+	"github.com/stpotter16/dump/internal/voyageai"
 )
 
-func newEmbedServer(t *testing.T, handler http.HandlerFunc) (*httptest.Server, embeder.Client) {
+func newEmbedServer(t *testing.T, handler http.HandlerFunc) (*httptest.Server, voyageai.Client) {
 	t.Helper()
 	server := httptest.NewServer(handler)
 	t.Cleanup(server.Close)
-	client := embeder.New(server.URL, "test-key", embeder.WithRetryDelays(0, 0, 0))
+	client := voyageai.New("test-key",
+		voyageai.WithBaseURL(server.URL),
+		voyageai.WithRetryDelays(0, 0, 0),
+	)
 	return server, client
 }
 
@@ -24,13 +27,15 @@ func TestEmbed_ReturnsEmbeddingOnSuccess(t *testing.T) {
 		if got, wantMethod := r.Method, http.MethodPost; got != wantMethod {
 			t.Errorf("method = %q, want %q", got, wantMethod)
 		}
-		if got, wantPath := r.URL.Path, "/embed"; got != wantPath {
+		if got, wantPath := r.URL.Path, "/embeddings"; got != wantPath {
 			t.Errorf("path = %q, want %q", got, wantPath)
 		}
-		if got, wantKey := r.Header.Get("X-API-Key"), "test-key"; got != wantKey {
-			t.Errorf("X-API-Key = %q, want %q", got, wantKey)
+		if got, wantAuth := r.Header.Get("Authorization"), "Bearer test-key"; got != wantAuth {
+			t.Errorf("Authorization = %q, want %q", got, wantAuth)
 		}
-		json.NewEncoder(w).Encode(map[string]any{"embedding": want})
+		json.NewEncoder(w).Encode(map[string]any{
+			"data": []map[string]any{{"embedding": want, "index": 0}},
+		})
 	})
 
 	got, err := client.Embed(context.Background(), "hello")
@@ -47,17 +52,19 @@ func TestEmbed_ReturnsEmbeddingOnSuccess(t *testing.T) {
 	}
 }
 
-func TestEmbed_RetriesOn503ThenSucceeds(t *testing.T) {
+func TestEmbed_RetriesOn429ThenSucceeds(t *testing.T) {
 	want := []float32{0.5, 0.5}
 	attempts := 0
 
 	_, client := newEmbedServer(t, func(w http.ResponseWriter, r *http.Request) {
 		attempts++
 		if attempts < 3 {
-			w.WriteHeader(http.StatusServiceUnavailable)
+			w.WriteHeader(http.StatusTooManyRequests)
 			return
 		}
-		json.NewEncoder(w).Encode(map[string]any{"embedding": want})
+		json.NewEncoder(w).Encode(map[string]any{
+			"data": []map[string]any{{"embedding": want, "index": 0}},
+		})
 	})
 
 	got, err := client.Embed(context.Background(), "retry me")
@@ -72,14 +79,38 @@ func TestEmbed_RetriesOn503ThenSucceeds(t *testing.T) {
 	}
 }
 
+func TestEmbed_RetriesOn5xxThenSucceeds(t *testing.T) {
+	want := []float32{0.5, 0.5}
+	attempts := 0
+
+	_, client := newEmbedServer(t, func(w http.ResponseWriter, r *http.Request) {
+		attempts++
+		if attempts < 2 {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			return
+		}
+		json.NewEncoder(w).Encode(map[string]any{
+			"data": []map[string]any{{"embedding": want, "index": 0}},
+		})
+	})
+
+	_, err := client.Embed(context.Background(), "retry me")
+	if err != nil {
+		t.Fatalf("Embed: %v", err)
+	}
+	if got, want := attempts, 2; got != want {
+		t.Errorf("attempts = %d, want %d", got, want)
+	}
+}
+
 func TestEmbed_ErrorsAfterExhaustedRetries(t *testing.T) {
 	attempts := 0
 	_, client := newEmbedServer(t, func(w http.ResponseWriter, r *http.Request) {
 		attempts++
-		w.WriteHeader(http.StatusServiceUnavailable)
+		w.WriteHeader(http.StatusTooManyRequests)
 	})
 
-	_, err := client.Embed(context.Background(), "always unavailable")
+	_, err := client.Embed(context.Background(), "always rate limited")
 	if err == nil {
 		t.Fatal("expected error when all retries exhausted, got nil")
 	}
@@ -88,7 +119,7 @@ func TestEmbed_ErrorsAfterExhaustedRetries(t *testing.T) {
 	}
 }
 
-func TestEmbed_DoesNotRetryNon503Errors(t *testing.T) {
+func TestEmbed_DoesNotRetryNon429Or5xxErrors(t *testing.T) {
 	attempts := 0
 	_, client := newEmbedServer(t, func(w http.ResponseWriter, r *http.Request) {
 		attempts++

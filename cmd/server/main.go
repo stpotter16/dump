@@ -12,12 +12,12 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/stpotter16/dump/internal/embeder"
 	"github.com/stpotter16/dump/internal/handlers"
 	"github.com/stpotter16/dump/internal/handlers/authentication"
 	"github.com/stpotter16/dump/internal/handlers/sessions"
 	"github.com/stpotter16/dump/internal/store/db"
 	"github.com/stpotter16/dump/internal/store/sqlite"
+	"github.com/stpotter16/dump/internal/voyageai"
 )
 
 func run(
@@ -37,14 +37,9 @@ func run(
 		return errors.New("DUMP_DB_PATH environment variable not set")
 	}
 
-	embederURL := getenv("EMBEDER_URL")
-	if embederURL == "" {
-		return errors.New("EMBEDER_URL environment variable not set")
-	}
-
-	embederAPIKey := getenv("EMBED_API_KEY")
-	if embederAPIKey == "" {
-		return errors.New("EMBED_API_KEY environment variable not set")
+	voyageAPIKey := getenv("VOYAGE_API_KEY")
+	if voyageAPIKey == "" {
+		return errors.New("VOYAGE_API_KEY environment variable not set")
 	}
 
 	passphrase := getenv("DUMP_PASSPHRASE")
@@ -78,7 +73,7 @@ func run(
 	}
 
 	authenticator := authentication.New(passphrase)
-	embedderClient := embeder.New(embederURL, embederAPIKey)
+	embedderClient := voyageai.New(voyageAPIKey)
 
 	cfg := handlers.Config{SimilarityThreshold: similarityThreshold}
 	handler := handlers.NewServer(store, embedderClient, sessionManager, authenticator, cfg)
