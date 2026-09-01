@@ -1,5 +1,6 @@
-access-key-id: ${LITESTREAM_ACCESS_KEY_ID}
-secret-access-key: ${LITESTREAM_SECRET_ACCESS_KEY}
+# S3 credentials are not set per-db here — this litestream instance uses
+# one shared identity across every bucket it replicates, configured once
+# at the process/box level. See systemd/SETUP.md.
 dbs:
   - path: ${DUMP_DB_PATH}/dump.sqlite
     replicas:
