@@ -63,7 +63,7 @@ func run(
 		return err
 	}
 
-	similarityThreshold := float32(0.5)
+	similarityThreshold := float32(0.75)
 	if raw := getenv("DUMP_SIMILARITY_THRESHOLD"); raw != "" {
 		parsed, err := strconv.ParseFloat(raw, 32)
 		if err != nil || parsed <= 0 || parsed > 1 {
